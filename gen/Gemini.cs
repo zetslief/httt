@@ -1,12 +1,19 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Web;
 
 namespace Gemini;
 
 public record Part(string Text);
-public record Content(string Role, IEnumerable<Part> Parts);
-public record GenerateContent(IEnumerable<Content> Contents);
+public record Content(string? Role, IEnumerable<Part> Parts);
+public record SystemInstruction(IEnumerable<Part> Parts);
+
+public class GenerateContentRequest(IEnumerable<Content> contents, SystemInstruction? systemInstruction)
+{
+    public SystemInstruction? SystemInstruction { get; } = systemInstruction;
+    public IEnumerable<Content> Contents { get; } = contents;
+}
 
 public record Candidate(Content Content);
 public record GenerateContentResponse(IEnumerable<Candidate>? Candidates);
@@ -24,9 +31,14 @@ public static class Gemini
         var uri = $"{BaseUrl}/{Model}:{GenerateContent}?{collection}";
         JsonSerializerOptions options = new(JsonSerializerOptions.Default)
         {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
         };
-        var response = await client.PostAsJsonAsync(uri, new GenerateContent([new("user", [new(text)])]), options);
+        var request = new GenerateContentRequest(
+            [new("user", [new(text)])],
+            new SystemInstruction([new("Don't use lists"), new("Use single paragraph")])
+        );
+        var response = await client.PostAsJsonAsync(uri, request, options);
         var generateContentResponse = await response.Content.ReadFromJsonAsync<GenerateContentResponse>(options);
         return generateContentResponse?.Candidates?.Single().Content.Parts.Single().Text
             ?? $"Error: {response}";
