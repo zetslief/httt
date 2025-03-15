@@ -22,7 +22,6 @@ public static class Gemini
         var collection = HttpUtility.ParseQueryString(string.Empty);
         collection.Add("key", Environment.GetEnvironmentVariable("T_T"));
         var uri = $"{BaseUrl}/{Model}:{GenerateContent}?{collection}";
-        Console.WriteLine(uri);
         JsonSerializerOptions options = new(JsonSerializerOptions.Default)
         {
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
