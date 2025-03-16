@@ -54,7 +54,7 @@ public class TopicSource
 
 public class Article
 {
-    public int ArticleId { get; set; }
+    public Guid ArticleId { get; set; }
     public required string Title { get; set; }
     
     public IEnumerable<Section>? Sections { get; set; }
