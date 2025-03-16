@@ -36,7 +36,7 @@ public static class Gemini
         };
         var request = new GenerateContentRequest(
             [new("user", [new(text)])],
-            new SystemInstruction([new("Don't use lists"), new("Use single paragraph")])
+            new SystemInstruction([new("don't use lists"), new("use only imaginary facts")])
         );
         var response = await client.PostAsJsonAsync(uri, request, options);
         var generateContentResponse = await response.Content.ReadFromJsonAsync<GenerateContentResponse>(options);

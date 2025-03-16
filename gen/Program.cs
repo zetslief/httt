@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
+using gen;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 using static Gemini.Gemini;
@@ -7,6 +9,12 @@ using static Gemini.Gemini;
 var configuration = new ConfigurationBuilder()
     .AddJsonFile("appSettings.json")
     .Build();
+
+await using var dbContext = new DataContextFactory().CreateDbContext(args);
+var ts = await dbContext.Topics.Select(t => t).CountAsync();
+Console.WriteLine($"There are {ts} topics in the database.");
+
+Environment.Exit(11);
 
 var dataFolder = configuration.GetRequiredSection("dataFolder").Value;
 Debug.Assert(dataFolder is not null);
