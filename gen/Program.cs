@@ -18,13 +18,13 @@ var dataFiles = Directory.GetFiles(fullPath, "*.json");
 
 await using var ctx = new DataContextFactory().CreateDbContext(args);
 
+var count = await ctx.Topics.CountAsync();
+Console.WriteLine($"there are {count} known topics.");
+
 foreach (var dataFile in dataFiles)
 {
     await WriteTopicFileToDatabaseAsync(ctx, dataFile);
 }
-
-var count = await ctx.Topics.CountAsync();
-Console.WriteLine($"there are {count} known topics.");
 
 /*
 using var client = new HttpClient();
