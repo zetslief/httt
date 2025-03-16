@@ -10,31 +10,40 @@ var configuration = new ConfigurationBuilder()
     .AddJsonFile("appSettings.json")
     .Build();
 
-var dataFolder = configuration.GetRequiredSection("dataFolder").Value;
-Debug.Assert(dataFolder is not null);
-var fullPath = Path.GetFullPath(dataFolder);
-Debug.Assert(fullPath is not null);
-var dataFiles = Directory.GetFiles(fullPath, "*.json");
-
 await using var ctx = new DataContextFactory().CreateDbContext(args);
 
 var count = await ctx.Topics.CountAsync();
 Console.WriteLine($"there are {count} known topics.");
 
-foreach (var dataFile in dataFiles)
+foreach (var source in ctx.TopicSources)
 {
-    await WriteTopicFileToDatabaseAsync(ctx, dataFile);
+    Console.WriteLine($"Topic: {source.Name} has content length of {source.Content.Length}");
 }
 
-/*
-using var client = new HttpClient();
-foreach (var topic in topics)
+using var httpClient = new HttpClient();
+foreach (var topic in ctx.Topics)
 {
-    Console.WriteLine($"========== {topic} ==========");
-    Console.WriteLine(await GenerateTextAsync(client, $"Tell me a little bit about {topic}"));
-    Console.WriteLine();
+    var result = await GenerateTextAsync(
+        httpClient,
+        $"What about {topic.Name}?",
+        "At least 10000 tokens and don't use markdown");
+    Console.WriteLine(result);
+    var paragraphs = result.Split('\n');
+    break;
 }
-*/
+
+static async Task ExploreDataSource(DataContext ctx, IConfiguration configuration)
+{
+    var dataFolder = configuration.GetRequiredSection("dataFolder").Value;
+    Debug.Assert(dataFolder is not null);
+    var fullPath = Path.GetFullPath(dataFolder);
+    Debug.Assert(fullPath is not null);
+    var dataFiles = Directory.GetFiles(fullPath, "*.json");
+    foreach (var dataFile in dataFiles)
+    {
+        await WriteTopicFileToDatabaseAsync(ctx, dataFile);
+    }
+}
 
 static async Task<string> WriteTopicFileToDatabaseAsync(DataContext ctx, string file)
 {

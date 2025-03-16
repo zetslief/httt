@@ -24,7 +24,7 @@ public static class Gemini
     private const string Model = "gemini-2.0-flash";
     private const string GenerateContent = "generateContent";
 
-    public static async Task<string> GenerateTextAsync(HttpClient client, string text)
+    public static async Task<string> GenerateTextAsync(HttpClient client, string text, string systemInstruction)
     {
         var collection = HttpUtility.ParseQueryString(string.Empty);
         collection.Add("key", Environment.GetEnvironmentVariable("T_T"));
@@ -36,7 +36,7 @@ public static class Gemini
         };
         var request = new GenerateContentRequest(
             [new("user", [new(text)])],
-            new SystemInstruction([new("don't use lists"), new("use only imaginary facts")])
+            new SystemInstruction([new("don't use lists"), new("use only imaginary facts"), new(systemInstruction)])
         );
         var response = await client.PostAsJsonAsync(uri, request, options);
         var generateContentResponse = await response.Content.ReadFromJsonAsync<GenerateContentResponse>(options);

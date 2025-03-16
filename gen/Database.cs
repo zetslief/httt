@@ -8,6 +8,9 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
     public DbSet<Topic> Topics { get; set; }
     public DbSet<TopicSource> TopicSources { get; set; }
 
+    public DbSet<Article> Articles { get; set; }
+    public DbSet<Section> Sections { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<TopicSource>()
@@ -47,4 +50,19 @@ public class TopicSource
     public int TopicSourceId { get; set; }
     public required string Name { get; set; }
     public required string Content { get; set; }
+}
+
+public class Article
+{
+    public int ArticleId { get; set; }
+    public string Title { get; set; }
+    
+    public IEnumerable<Section> Sections { get; set; }
+    public Topic Topic { get; set; }
+}
+
+public class Section
+{
+    public int SectionId { get; set; }
+    public string Content { get; set; }
 }
