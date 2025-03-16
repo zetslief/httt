@@ -55,14 +55,15 @@ public class TopicSource
 public class Article
 {
     public int ArticleId { get; set; }
-    public string Title { get; set; }
+    public required string Title { get; set; }
     
-    public IEnumerable<Section> Sections { get; set; }
-    public Topic Topic { get; set; }
+    public IEnumerable<Section>? Sections { get; set; }
+    public required Topic Topic { get; set; }
 }
 
 public class Section
 {
     public int SectionId { get; set; }
-    public string Content { get; set; }
+    public required string Content { get; set; }
+    public required Article Article { get; set; }
 }

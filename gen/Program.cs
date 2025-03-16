@@ -26,12 +26,20 @@ foreach (var topic in ctx.Topics)
     var result = await GenerateTextAsync(
         httpClient,
         $"What about {topic.Name}?",
-        "At least 10000 tokens and don't use markdown");
+        "At least 10000 tokens, don't use markdown, first sentence is a title");
     Console.WriteLine(result);
     var paragraphs = result.Split('\n');
+    var articleTitle = $"{topic.Name} | {paragraphs[0]}";
+    var article = ctx.Articles.Add(new() { Title = articleTitle, Topic = topic });
+    await ctx.Sections.AddRangeAsync(paragraphs
+        .Skip(1)
+        .Where(p => p.Length > 5 && !string.IsNullOrWhiteSpace(p))
+        .Select(p => new Section { Content = p, Article = article.Entity}));
+    await ctx.SaveChangesAsync();
     break;
 }
 
+/*
 static async Task ExploreDataSource(DataContext ctx, IConfiguration configuration)
 {
     var dataFolder = configuration.GetRequiredSection("dataFolder").Value;
@@ -60,3 +68,4 @@ static async Task<string> WriteTopicFileToDatabaseAsync(DataContext ctx, string 
     await ctx.SaveChangesAsync();
     return string.Empty;
 }
+*/
