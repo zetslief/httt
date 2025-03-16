@@ -36,10 +36,10 @@ foreach (var topic in ctx.Topics)
         .Where(p => p.Length > 5 && !string.IsNullOrWhiteSpace(p))
         .Select(p => new Section { Content = p, Article = article.Entity}));
     await ctx.SaveChangesAsync();
+    Console.WriteLine($"{article.Entity.Title} is written into the database.");
     break;
 }
 
-/*
 static async Task ExploreDataSource(DataContext ctx, IConfiguration configuration)
 {
     var dataFolder = configuration.GetRequiredSection("dataFolder").Value;
@@ -68,4 +68,3 @@ static async Task<string> WriteTopicFileToDatabaseAsync(DataContext ctx, string 
     await ctx.SaveChangesAsync();
     return string.Empty;
 }
-*/
