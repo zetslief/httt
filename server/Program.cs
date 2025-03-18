@@ -16,7 +16,10 @@ builder.Services.AddDbContext<DataContext>(options =>
 var app = builder.Build();
 
 app.MapGet("/", async (DataContext ctx) => {
-    var articles = await ctx.Articles.Select(a => new ArticleLink(a.ArticleId, a.Title)).ToArrayAsync();
+    var articles = await ctx.Articles
+        .OrderByDescending(a => a.CreatedOn)
+        .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn))
+        .ToArrayAsync();
     return Results.Content(ToArticleListHtml(articles), "text/html");
 });
 app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) => {
@@ -37,7 +40,7 @@ static string ToArticleListHtml(IEnumerable<ArticleLink> articles)
     builder.AppendLine("<ol>");
     foreach (var article in articles)
     {
-        builder.AppendLine($"\t<li><a href='/article/{article.Id}'>{article.Title}</a></li>");
+        builder.AppendLine($"\t<li><a href='/article/{article.Id}'>{article.Title}</a><p>{article.CreatedOn}</p></li>");
     }
     builder.AppendLine("</ol");
     builder.AppendLine("</div>");
@@ -63,7 +66,7 @@ static Article CreateErrorArticle(string articleFilePath) => new(
     []
 );
 
-record ArticleLink(Guid Id, string Title);
+record ArticleLink(Guid Id, string Title, DateTime CreatedOn);
 record Article(string Title, IEnumerable<Section>? Sections);
 record Section(string Title, string Content, IEnumerable<Section>? SubSection);
 
