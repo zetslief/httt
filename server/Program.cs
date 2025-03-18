@@ -18,11 +18,14 @@ var app = builder.Build();
 app.MapGet("/", async (DataContext ctx) => {
     var articles = await ctx.Articles
         .OrderByDescending(a => a.CreatedOn)
-        .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn))
+        .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
         .ToArrayAsync();
     return Results.Content(ToArticleListHtml(articles), "text/html");
 });
+
 app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) => {
+    await ctx.Articles.Where(a => a.ArticleId == articleId)
+        .ExecuteUpdateAsync(s => s.SetProperty(a => a.ViewCount, a => a.ViewCount + 1));
     var article = await ctx.Articles.Include(article => article.Sections).SingleAsync(a => a.ArticleId == articleId);
     return Results.Content(ArticleToHtml(new(
         article.Title,
@@ -32,15 +35,15 @@ app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) => {
 
 app.Run();
 
-static string ToArticleListHtml(IEnumerable<ArticleLink> articles)
+static string ToArticleListHtml(IReadOnlyCollection<ArticleLink> articles)
 {
     var builder = new StringBuilder();
     builder.AppendLine("<div>");
-    builder.AppendLine($"\t<h1>Articles</h1>");
+    builder.AppendLine($"\t<h1>There are {articles.Count} articles:</h1>");
     builder.AppendLine("<ol>");
     foreach (var article in articles)
     {
-        builder.AppendLine($"\t<li><a href='/article/{article.Id}'>{article.Title}</a><p>{article.CreatedOn}</p></li>");
+        builder.AppendLine($"\t<li><a href='/article/{article.Id}'>{article.Title}</a><p>{article.CreatedOn} Views: {article.ViewCount}</p></li>");
     }
     builder.AppendLine("</ol");
     builder.AppendLine("</div>");
@@ -66,7 +69,7 @@ static Article CreateErrorArticle(string articleFilePath) => new(
     []
 );
 
-record ArticleLink(Guid Id, string Title, DateTime CreatedOn);
+record ArticleLink(Guid Id, string Title, DateTime CreatedOn, int ViewCount);
 record Article(string Title, IEnumerable<Section>? Sections);
 record Section(string Title, string Content, IEnumerable<Section>? SubSection);
 
