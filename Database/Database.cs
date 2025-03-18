@@ -57,6 +57,7 @@ public class Article
     public Guid ArticleId { get; set; }
     public required string Title { get; set; }
     public required DateTime CreatedOn { get; set; }
+    public int ViewCount { get; set; }
 
     public IEnumerable<Section>? Sections { get; set; }
     public required Topic Topic { get; set; }
