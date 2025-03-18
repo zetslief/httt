@@ -25,12 +25,12 @@ foreach (var topic in ctx.Topics)
 {
     var result = await GenerateTextAsync(
         httpClient,
-        $"What about {topic.Name}?",
-        "At least 10000 tokens, don't use markdown, first sentence is a title");
+        $"What's new about {topic.Name}?",
+        "At least 20000 tokens, don't use markdown, first sentence is a title");
     if (result.StartsWith("Error")) continue;
     var paragraphs = result.Split('\n');
     var articleTitle = $"{paragraphs[0]}";
-    var article = ctx.Articles.Add(new() { Title = articleTitle, Topic = topic });
+    var article = ctx.Articles.Add(new() { Title = articleTitle, Topic = topic, CreatedOn = DateTime.UtcNow });
     await ctx.Sections.AddRangeAsync(paragraphs
         .Skip(1)
         .Where(p => p.Length > 5 && !string.IsNullOrWhiteSpace(p))
