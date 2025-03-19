@@ -35,20 +35,20 @@ app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) => {
 
 app.Run();
 
-static string ToArticleListHtml(IReadOnlyCollection<ArticleLink> articles)
-{
-    var builder = new StringBuilder();
-    builder.AppendLine("<div>");
-    builder.AppendLine($"\t<h1>There are {articles.Count} articles:</h1>");
-    builder.AppendLine("<ol>");
-    foreach (var article in articles)
-    {
-        builder.AppendLine($"\t<li><a href='/article/{article.Id}'>{article.Title}</a><p>{article.CreatedOn} Views: {article.ViewCount}</p></li>");
-    }
-    builder.AppendLine("</ol");
-    builder.AppendLine("</div>");
-    return builder.ToString();
-}
+static string ToArticleListHtml(IReadOnlyCollection<ArticleLink> articles) => new HtmlBuilder()
+    .WithTag("div", builder => builder
+        .AddHeader(1, $"There are {articles.Count} articles:")
+        .WithTag("ol", listBuilder =>
+        {
+            foreach (var article in articles)
+            {
+                listBuilder.WithTag("li", listItemBuilder => listItemBuilder
+                        .AddA($"/article/{article.Id}", article.Title)
+                        .AddTag("p", $"{article.CreatedOn} Views: {article.ViewCount}")
+                );
+            }
+        })
+    ).Build();
 
 static string ArticleToHtml(Article article)
 {
@@ -73,20 +73,44 @@ record ArticleLink(Guid Id, string Title, DateTime CreatedOn, int ViewCount);
 record Article(string Title, IEnumerable<Section>? Sections);
 record Section(string Title, string Content, IEnumerable<Section>? SubSection);
 
-class HtmlBuilder()
+sealed class HtmlBuilder
 {
     private readonly StringBuilder builder = new(1024);
+    private int indent = 0;
 
     public HtmlBuilder AddHeader(int number, string content)
     {
-        builder.AppendLine($"\t<h{number}>{content}</h{number}>");
+        AppendLine($"\t<h{number}>{content}</h{number}>");
         return this;
     }
 
-    public HtmlBuilder AddP(string content)
+    public HtmlBuilder AddA(string href, string content)
     {
-        builder.AppendLine($"<p>{content}</p>");
+        AppendLine($"<a href='{href}'>{content}</a>");
         return this;
+    }
+
+    public HtmlBuilder AddTag(string tag, string content)
+    {
+        AppendLine($"<{tag}>{content}</{tag}>");
+        return this;
+    }
+
+    public HtmlBuilder WithTag(string tag, Action<HtmlBuilder> buildInner)
+    {
+        AppendLine($"<{tag}>");
+        indent += 1;
+        buildInner(this);
+        indent -= 1;
+        AppendLine($"</{tag}>");
+        return this;
+    }
+
+    private void AppendLine(string content)
+    {
+        for (int i = 0; i < indent; ++i)
+            builder.Append('\t');
+        this.builder.AppendLine(content);
     }
 
     public string Build()
