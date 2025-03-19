@@ -50,7 +50,18 @@ static string ToArticleListHtml(IReadOnlyCollection<ArticleLink> articles) => ne
         })
     ).Build();
 
-static string ArticleToHtml(Article article)
+static string ArticleToHtml(Article article) => new HtmlBuilder()
+    .WithTag("div", builder =>
+    {
+        builder.AddHeader(1, article.Title);
+        foreach (var section in article.Sections ?? [])
+        {
+            builder
+                .AddHeader(2, section.Title)
+                .AddTag("p", section.Content);
+        }
+    }).Build();
+/*
 {
     var builder = new StringBuilder();
     builder.AppendLine($"<div>");
@@ -63,6 +74,7 @@ static string ArticleToHtml(Article article)
     builder.AppendLine($"</div>");
     return builder.ToString();
 }
+*/
 
 static Article CreateErrorArticle(string articleFilePath) => new(
     $"Error while generating {articleFilePath}",
