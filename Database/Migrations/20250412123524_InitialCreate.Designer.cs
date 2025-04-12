@@ -11,8 +11,8 @@ using gen;
 namespace Database.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250318211041_AddArticleViewCount")]
-    partial class AddArticleViewCount
+    [Migration("20250412123524_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

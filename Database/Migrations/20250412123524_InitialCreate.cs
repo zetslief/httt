@@ -50,6 +50,8 @@ namespace Database.Migrations
                 {
                     ArticleId = table.Column<Guid>(type: "TEXT", nullable: false),
                     Title = table.Column<string>(type: "TEXT", nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ViewCount = table.Column<int>(type: "INTEGER", nullable: false),
                     TopicId = table.Column<int>(type: "INTEGER", nullable: false),
                     TopicName = table.Column<string>(type: "TEXT", nullable: false)
                 },
