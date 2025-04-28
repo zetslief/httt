@@ -19,7 +19,7 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
         modelBuilder.Entity<TopicSource>()
             .Property(e => e.Name)
             .HasMaxLength(1024 * 10);
-        
+
         modelBuilder.Entity<Topic>()
             .HasIndex(e => e.Name)
             .IsUnique();

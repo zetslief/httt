@@ -15,7 +15,8 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 var app = builder.Build();
 
-app.MapGet("/", async (DataContext ctx) => {
+app.MapGet("/", async (DataContext ctx) =>
+{
     var newestArticles = await ctx.Articles
         .OrderByDescending(a => a.CreatedOn)
         .Take(500)
@@ -33,7 +34,8 @@ app.MapGet("/", async (DataContext ctx) => {
     return Results.Content(html, "text/html");
 });
 
-app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) => {
+app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) =>
+{
     await ctx.Articles.Where(a => a.ArticleId == articleId)
         .ExecuteUpdateAsync(s => s.SetProperty(a => a.ViewCount, a => a.ViewCount + 1));
     var article = await ctx.Articles.Include(article => article.Sections).SingleAsync(a => a.ArticleId == articleId);

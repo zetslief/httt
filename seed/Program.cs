@@ -16,7 +16,7 @@ Console.WriteLine($"{items.Length} found.");
 
 await using var dbContext = new DataContextFactory().CreateDbContext([]);
 
-var topicSource = await dbContext.TopicSources.AddAsync(new ()
+var topicSource = await dbContext.TopicSources.AddAsync(new()
 {
     Name = Path.GetFileName(filePath),
     Content = content

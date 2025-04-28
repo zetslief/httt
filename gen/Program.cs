@@ -31,9 +31,9 @@ static async Task<bool> GenerateArticleAsync(HttpClient httpClient, Topic topic)
         httpClient,
         $"What's new about {topic.Name} from {topic.Source.Name}?",
         "At least 20000 tokens, don't use markdown, first sentence is a title");
-    
+
     if (result.StartsWith("Error")) return false;
-    
+
     var paragraphs = result.Split('\n');
     var articleTitle = $"{paragraphs[0]}";
     await using var ctx = new DataContextFactory().CreateDbContext([]);
