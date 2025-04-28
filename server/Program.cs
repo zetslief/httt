@@ -18,17 +18,17 @@ var app = builder.Build();
 app.MapGet("/", async (DataContext ctx) => {
     var newestArticles = await ctx.Articles
         .OrderByDescending(a => a.CreatedOn)
-        .Take(1000)
+        .Take(500)
         .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
         .ToArrayAsync();
     var topViewedArticles = await ctx.Articles
         .OrderByDescending(a => a.ViewCount)
-        .Take(1000)
+        .Take(500)
         .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
         .ToArrayAsync();
     var html = ToFlexBox([
-        ToArticleListHtml(newestArticles),
-        ToArticleListHtml(topViewedArticles),
+        ToArticleListHtml("New", newestArticles),
+        ToArticleListHtml("Top viewed", topViewedArticles),
     ]);
     return Results.Content(html, "text/html");
 });
@@ -68,9 +68,9 @@ static string ToFlexBox(IEnumerable<string> children) => new HtmlBuilder()
     }, style: "display: flex;;")
     .Build();
 
-static string ToArticleListHtml(IReadOnlyCollection<ArticleLink> articles) => new HtmlBuilder()
+static string ToArticleListHtml(string title, IReadOnlyCollection<ArticleLink> articles) => new HtmlBuilder()
     .WithTag("div", builder => builder
-        .AddHeader(1, $"There are {articles.Count} articles:")
+        .AddHeader(1, title)
         .WithTag("ol", listBuilder =>
         {
             foreach (var article in articles)
@@ -94,11 +94,6 @@ static string ArticleToHtml(Article article) => new HtmlBuilder()
                 .AddTag("p", section.Content);
         }
     }).Build();
-
-static Article CreateErrorArticle(string articleFilePath) => new(
-    $"Error while generating {articleFilePath}",
-    []
-);
 
 record ArticleLink(Guid Id, string Title, DateTime CreatedOn, int ViewCount);
 record Article(string Title, IEnumerable<Section>? Sections);
