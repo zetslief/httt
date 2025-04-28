@@ -15,32 +15,33 @@ namespace Database.Migrations
                 name: "TopicSources",
                 columns: table => new
                 {
-                    TopicSourceId = table.Column<int>(type: "INTEGER", nullable: false),
+                    TopicSourceId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 10240, nullable: false),
                     Content = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TopicSources", x => new { x.TopicSourceId, x.Name });
+                    table.PrimaryKey("PK_TopicSources", x => x.TopicSourceId);
                 });
 
             migrationBuilder.CreateTable(
                 name: "Topics",
                 columns: table => new
                 {
-                    TopicId = table.Column<int>(type: "INTEGER", nullable: false),
+                    TopicId = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
                     Name = table.Column<string>(type: "TEXT", maxLength: 512, nullable: false),
-                    SourceTopicSourceId = table.Column<int>(type: "INTEGER", nullable: false),
-                    SourceName = table.Column<string>(type: "TEXT", nullable: false)
+                    SourceTopicSourceId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Topics", x => new { x.TopicId, x.Name });
+                    table.PrimaryKey("PK_Topics", x => x.TopicId);
                     table.ForeignKey(
-                        name: "FK_Topics_TopicSources_SourceTopicSourceId_SourceName",
-                        columns: x => new { x.SourceTopicSourceId, x.SourceName },
+                        name: "FK_Topics_TopicSources_SourceTopicSourceId",
+                        column: x => x.SourceTopicSourceId,
                         principalTable: "TopicSources",
-                        principalColumns: new[] { "TopicSourceId", "Name" },
+                        principalColumn: "TopicSourceId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -52,17 +53,16 @@ namespace Database.Migrations
                     Title = table.Column<string>(type: "TEXT", nullable: false),
                     CreatedOn = table.Column<DateTime>(type: "TEXT", nullable: false),
                     ViewCount = table.Column<int>(type: "INTEGER", nullable: false),
-                    TopicId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TopicName = table.Column<string>(type: "TEXT", nullable: false)
+                    TopicId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Articles", x => x.ArticleId);
                     table.ForeignKey(
-                        name: "FK_Articles_Topics_TopicId_TopicName",
-                        columns: x => new { x.TopicId, x.TopicName },
+                        name: "FK_Articles_Topics_TopicId",
+                        column: x => x.TopicId,
                         principalTable: "Topics",
-                        principalColumns: new[] { "TopicId", "Name" },
+                        principalColumn: "TopicId",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -87,9 +87,9 @@ namespace Database.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Articles_TopicId_TopicName",
+                name: "IX_Articles_TopicId",
                 table: "Articles",
-                columns: new[] { "TopicId", "TopicName" });
+                column: "TopicId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Sections_ArticleId",
@@ -97,9 +97,21 @@ namespace Database.Migrations
                 column: "ArticleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Topics_SourceTopicSourceId_SourceName",
+                name: "IX_Topics_Name",
                 table: "Topics",
-                columns: new[] { "SourceTopicSourceId", "SourceName" });
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Topics_SourceTopicSourceId",
+                table: "Topics",
+                column: "SourceTopicSourceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TopicSources_Name",
+                table: "TopicSources",
+                column: "Name",
+                unique: true);
         }
 
         /// <inheritdoc />

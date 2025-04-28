@@ -14,13 +14,15 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<TopicSource>()
-            .HasKey(e => new { e.TopicSourceId, e.Name });
+            .HasIndex(e => e.Name)
+            .IsUnique();
         modelBuilder.Entity<TopicSource>()
             .Property(e => e.Name)
             .HasMaxLength(1024 * 10);
-            
+        
         modelBuilder.Entity<Topic>()
-            .HasKey(table => new { table.TopicId, table.Name });
+            .HasIndex(e => e.Name)
+            .IsUnique();
         modelBuilder.Entity<Topic>()
             .Property(t => t.Name)
             .HasMaxLength(512);

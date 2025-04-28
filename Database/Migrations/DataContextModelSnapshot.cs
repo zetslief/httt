@@ -33,16 +33,12 @@ namespace Database.Migrations
                     b.Property<int>("TopicId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("TopicName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("ViewCount")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("ArticleId");
 
-                    b.HasIndex("TopicId", "TopicName");
+                    b.HasIndex("TopicId");
 
                     b.ToTable("Articles");
                 });
@@ -70,22 +66,23 @@ namespace Database.Migrations
             modelBuilder.Entity("gen.Topic", b =>
                 {
                     b.Property<int>("TopicId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
-                        .HasMaxLength(512)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SourceName")
                         .IsRequired()
+                        .HasMaxLength(512)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SourceTopicSourceId")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("TopicId", "Name");
+                    b.HasKey("TopicId");
 
-                    b.HasIndex("SourceTopicSourceId", "SourceName");
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("SourceTopicSourceId");
 
                     b.ToTable("Topics");
                 });
@@ -93,17 +90,22 @@ namespace Database.Migrations
             modelBuilder.Entity("gen.TopicSource", b =>
                 {
                     b.Property<int>("TopicSourceId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(10240)
-                        .HasColumnType("TEXT");
 
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("TopicSourceId", "Name");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(10240)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("TopicSourceId");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("TopicSources");
                 });
@@ -112,7 +114,7 @@ namespace Database.Migrations
                 {
                     b.HasOne("gen.Topic", "Topic")
                         .WithMany()
-                        .HasForeignKey("TopicId", "TopicName")
+                        .HasForeignKey("TopicId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -134,7 +136,7 @@ namespace Database.Migrations
                 {
                     b.HasOne("gen.TopicSource", "Source")
                         .WithMany()
-                        .HasForeignKey("SourceTopicSourceId", "SourceName")
+                        .HasForeignKey("SourceTopicSourceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

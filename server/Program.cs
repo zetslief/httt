@@ -33,6 +33,22 @@ app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) => {
     )), "text/html");
 });
 
+app.Use(async (httpContext, next) =>
+{
+    Console.WriteLine(httpContext.Connection.Id);
+    Console.WriteLine(httpContext.Connection.LocalIpAddress);
+    Console.WriteLine(httpContext.Connection.LocalPort);
+    Console.WriteLine(httpContext.Connection.RemoteIpAddress);
+    Console.WriteLine(httpContext.Connection.RemotePort);
+    Console.WriteLine(httpContext.Connection.ClientCertificate);
+    Console.WriteLine(httpContext.TraceIdentifier);
+    Console.WriteLine(httpContext.Request.Host);
+    Console.WriteLine(httpContext.Request.IsHttps);
+    Console.WriteLine(httpContext.Request.Path);
+    Console.WriteLine(string.Join(',', httpContext.Request.Headers.Select(s => s.ToString()).ToArray()));
+    await next(httpContext);
+});
+
 app.Run();
 
 static string ToArticleListHtml(IReadOnlyCollection<ArticleLink> articles) => new HtmlBuilder()
@@ -61,20 +77,6 @@ static string ArticleToHtml(Article article) => new HtmlBuilder()
                 .AddTag("p", section.Content);
         }
     }).Build();
-/*
-{
-    var builder = new StringBuilder();
-    builder.AppendLine($"<div>");
-    builder.AppendLine($"\t<h1>{article.Title}</h1>");
-    foreach (var section in article.Sections ?? [])
-    {
-        builder.AppendLine($"\t\t<h2>{section.Title}</h2>");
-        builder.AppendLine($"\t\t<p>{section.Content}</p>");
-    }
-    builder.AppendLine($"</div>");
-    return builder.ToString();
-}
-*/
 
 static Article CreateErrorArticle(string articleFilePath) => new(
     $"Error while generating {articleFilePath}",
@@ -122,13 +124,8 @@ sealed class HtmlBuilder
     {
         for (int i = 0; i < indent; ++i)
             builder.Append('\t');
-        this.builder.AppendLine(content);
+        builder.AppendLine(content);
     }
 
-    public string Build()
-    {
-        builder.AppendLine($"\t</body>");
-        builder.AppendLine($"\t</html>");
-        return builder.ToString();
-    }
+    public string Build() => builder.ToString();
 }
