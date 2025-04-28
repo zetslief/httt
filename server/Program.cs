@@ -16,11 +16,21 @@ builder.Services.AddDbContext<DataContext>(options =>
 var app = builder.Build();
 
 app.MapGet("/", async (DataContext ctx) => {
-    var articles = await ctx.Articles
+    var newestArticles = await ctx.Articles
         .OrderByDescending(a => a.CreatedOn)
+        .Take(1000)
         .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
         .ToArrayAsync();
-    return Results.Content(ToArticleListHtml(articles), "text/html");
+    var topViewedArticles = await ctx.Articles
+        .OrderByDescending(a => a.ViewCount)
+        .Take(1000)
+        .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
+        .ToArrayAsync();
+    var html = ToFlexBox([
+        ToArticleListHtml(newestArticles),
+        ToArticleListHtml(topViewedArticles),
+    ]);
+    return Results.Content(html, "text/html");
 });
 
 app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) => {
@@ -50,6 +60,13 @@ app.Use(async (httpContext, next) =>
 });
 
 app.Run();
+
+static string ToFlexBox(IEnumerable<string> children) => new HtmlBuilder()
+    .WithTag("div", builder =>
+    {
+        foreach (var child in children) builder.AddTag("div", child, style: "flex: 1 1 0;");
+    }, style: "display: flex;;")
+    .Build();
 
 static string ToArticleListHtml(IReadOnlyCollection<ArticleLink> articles) => new HtmlBuilder()
     .WithTag("div", builder => builder
@@ -104,15 +121,15 @@ sealed class HtmlBuilder
         return this;
     }
 
-    public HtmlBuilder AddTag(string tag, string content)
+    public HtmlBuilder AddTag(string tag, string content, string? style = null)
     {
-        AppendLine($"<{tag}>{content}</{tag}>");
+        AppendLine($"<{tag} style='{style ?? string.Empty}'>{content}</{tag}>");
         return this;
     }
 
-    public HtmlBuilder WithTag(string tag, Action<HtmlBuilder> buildInner)
+    public HtmlBuilder WithTag(string tag, Action<HtmlBuilder> buildInner, string? style = null)
     {
-        AppendLine($"<{tag}>");
+        AppendLine($"<{tag} style='{style ?? string.Empty}'>");
         indent += 1;
         buildInner(this);
         indent -= 1;
