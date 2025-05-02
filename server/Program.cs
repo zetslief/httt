@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using gen;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,17 +48,23 @@ app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) =>
 
 app.Use(async (httpContext, next) =>
 {
-    Console.WriteLine(httpContext.Connection.Id);
-    Console.WriteLine(httpContext.Connection.LocalIpAddress);
-    Console.WriteLine(httpContext.Connection.LocalPort);
-    Console.WriteLine(httpContext.Connection.RemoteIpAddress);
-    Console.WriteLine(httpContext.Connection.RemotePort);
-    Console.WriteLine(httpContext.Connection.ClientCertificate);
-    Console.WriteLine(httpContext.TraceIdentifier);
-    Console.WriteLine(httpContext.Request.Host);
-    Console.WriteLine(httpContext.Request.IsHttps);
-    Console.WriteLine(httpContext.Request.Path);
-    Console.WriteLine(string.Join(',', httpContext.Request.Headers.Select(s => s.ToString()).ToArray()));
+    var dataContext = httpContext.RequestServices.GetRequiredService<DataContext>();
+    var callerIp = httpContext.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedIp)
+            ? forwardedIp
+            : (httpContext.Request.Headers.TryGetValue("Cf-Connecting-IP", out var cfConnectionIp)
+                ? cfConnectionIp
+                : default);
+
+    var request = await dataContext.Requests.AddAsync(new()
+    {
+        RequestId = Guid.NewGuid(),
+        Path = httpContext.Request.Path,
+        DateTimeOffset = DateTimeOffset.UtcNow,
+        CallerIP = callerIp.ToString(),
+        RawHeadersString = string.Join(',', httpContext.Request.Headers)
+    });
+    Console.WriteLine($"{request.Entity.Path}: {request.Entity.CallerIP}");
+    await dataContext.SaveChangesAsync();
     await next(httpContext);
 });
 

@@ -11,6 +11,8 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
     public DbSet<Article> Articles { get; set; }
     public DbSet<Section> Sections { get; set; }
 
+    public DbSet<Request> Requests { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<TopicSource>()
@@ -70,4 +72,13 @@ public class Section
     public int SectionId { get; set; }
     public required string Content { get; set; }
     public required Article Article { get; set; }
+}
+
+public class Request
+{
+    public Guid RequestId { get; set; }
+    public string Path { get; set; }
+    public DateTimeOffset DateTimeOffset { get; set; }
+    public string CallerIP { get; set; }
+    public string RawHeadersString { get; set; }
 }
