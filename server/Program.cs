@@ -16,6 +16,8 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 var app = builder.Build();
 
+app.UseStaticFiles();
+
 app.MapGet("/", async (DataContext ctx) =>
 {
     var newestArticles = await ctx.Articles
