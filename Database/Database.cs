@@ -44,41 +44,42 @@ public class DataContextFactory : IDesignTimeDbContextFactory<DataContext>
 
 public class Topic
 {
-    public int TopicId { get; set; }
-    public required string Name { get; set; }
-    public required TopicSource Source { get; set; }
+    public int TopicId { get; init; }
+    public required string Name { get; init; }
+    public required TopicSource Source { get; init; }
 }
 
 public class TopicSource
 {
-    public int TopicSourceId { get; set; }
-    public required string Name { get; set; }
-    public required string Content { get; set; }
+    public int TopicSourceId { get; init; }
+    public required string Name { get; init; }
+    public required string Content { get; init; }
 }
 
 public class Article
 {
-    public Guid ArticleId { get; set; }
-    public required string Title { get; set; }
-    public required DateTime CreatedOn { get; set; }
+    public Guid ArticleId { get; init; }
+    public required string Title { get; init; }
+    public required DateTime CreatedOn { get; init; }
     public int ViewCount { get; set; }
 
-    public IEnumerable<Section>? Sections { get; set; }
-    public required Topic Topic { get; set; }
+    public IEnumerable<Section>? Sections { get; init; }
+    public required Topic Topic { get; init; }
 }
 
 public class Section
 {
-    public int SectionId { get; set; }
-    public required string Content { get; set; }
-    public required Article Article { get; set; }
+    public int SectionId { get; init; }
+    public required string Content { get; init; }
+    public required Article Article { get; init; }
 }
 
 public class Request
 {
-    public Guid RequestId { get; set; }
-    public string Path { get; set; }
-    public DateTimeOffset DateTimeOffset { get; set; }
-    public string CallerIP { get; set; }
-    public string RawHeadersString { get; set; }
+    public required Guid RequestId { get; init; }
+    public required string Path { get; init; }
+    public required DateTimeOffset RequestedOn { get; init; }
+    public required string CallerIP { get; init; }
+    public required int ResponseStatusCode { get; init; }
+    public required string RawHeadersString { get; init; }
 }

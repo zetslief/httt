@@ -50,24 +50,26 @@ app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) =>
 
 app.Use(async (httpContext, next) =>
 {
-    var dataContext = httpContext.RequestServices.GetRequiredService<DataContext>();
     var callerIp = httpContext.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedIp)
             ? forwardedIp
             : (httpContext.Request.Headers.TryGetValue("Cf-Connecting-IP", out var cfConnectionIp)
                 ? cfConnectionIp
                 : default);
+    
+    await next(httpContext);
 
+    var dataContext = httpContext.RequestServices.GetRequiredService<DataContext>();
     var request = await dataContext.Requests.AddAsync(new()
     {
         RequestId = Guid.NewGuid(),
         Path = httpContext.Request.Path,
-        DateTimeOffset = DateTimeOffset.UtcNow,
+        RequestedOn = DateTimeOffset.UtcNow,
+        ResponseStatusCode = httpContext.Response.StatusCode,
         CallerIP = callerIp.ToString(),
         RawHeadersString = string.Join(',', httpContext.Request.Headers)
     });
-    Console.WriteLine($"{request.Entity.Path}: {request.Entity.CallerIP}");
     await dataContext.SaveChangesAsync();
-    await next(httpContext);
+    Console.WriteLine($"{request.Entity.ResponseStatusCode} > {request.Entity.Path} | {request.Entity.CallerIP}");
 });
 
 app.Run();
