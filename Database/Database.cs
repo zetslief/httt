@@ -23,9 +23,6 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
             .HasMaxLength(1024 * 10);
 
         modelBuilder.Entity<Topic>()
-            .HasIndex(e => e.Name)
-            .IsUnique();
-        modelBuilder.Entity<Topic>()
             .Property(t => t.Name)
             .HasMaxLength(512);
     }
