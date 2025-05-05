@@ -30,9 +30,15 @@ app.MapGet("/", async (DataContext ctx) =>
         .Take(500)
         .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
         .ToArrayAsync();
+    var leastViewedArticles = await ctx.Articles
+        .OrderBy(a => a.ViewCount)
+        .Take(500)
+        .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
+        .ToArrayAsync();
     var html = ToFlexBox([
         ToArticleListHtml("New", newestArticles),
         ToArticleListHtml("Top viewed", topViewedArticles),
+        ToArticleListHtml("Least viewed", leastViewedArticles),
     ]);
     return Results.Content(html, "text/html");
 });
