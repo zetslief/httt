@@ -1,8 +1,7 @@
+using System.Diagnostics;
 using System.Text;
-using System.Text.Json;
 using gen;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Primitives;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +55,7 @@ app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) =>
 
 app.Use(async (httpContext, next) =>
 {
+    var stopwatch = Stopwatch.StartNew();
     var callerIp = httpContext.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedIp)
             ? forwardedIp
             : (httpContext.Request.Headers.TryGetValue("Cf-Connecting-IP", out var cfConnectionIp)
@@ -75,7 +75,8 @@ app.Use(async (httpContext, next) =>
         RawHeadersString = string.Join(',', httpContext.Request.Headers)
     });
     await dataContext.SaveChangesAsync();
-    Console.WriteLine($"{request.Entity.ResponseStatusCode} > {request.Entity.Path} | {request.Entity.CallerIP}");
+    stopwatch.Stop();
+    Console.WriteLine($"{request.Entity.ResponseStatusCode} > {request.Entity.Path} | {request.Entity.CallerIP} | Request duration: {stopwatch.Elapsed}");
 });
 
 app.Run();
