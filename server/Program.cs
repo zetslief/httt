@@ -53,6 +53,21 @@ app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) =>
     )), "text/html");
 });
 
+app.MapGet("/articles/{startIndex}/{length}", async (DataContext ctx, int startIndex, int length) =>
+{
+    // TODO: change that to validation errors.
+    if (length <= 0 || startIndex < 0) return Results.BadRequest($"Invalid path parameters: {length}, {startIndex}.");
+    var totalCount = await ctx.Articles.CountAsync();
+    if (totalCount <= startIndex) return Results.BadRequest($"There are {totalCount} of articles. Cannot show {length} articles at {startIndex}");
+
+    var articles = await ctx.Articles.OrderByDescending(a => a.CreatedOn)
+        .Skip(startIndex)
+        .Take(length)
+        .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
+        .ToArrayAsync();
+    return Results.Content(ToArticleListHtml($"Articles: {startIndex} - {(startIndex + articles.Length)}", articles), "text/html");
+});
+
 app.Use(async (httpContext, next) =>
 {
     var stopwatch = Stopwatch.StartNew();
@@ -61,7 +76,7 @@ app.Use(async (httpContext, next) =>
             : (httpContext.Request.Headers.TryGetValue("Cf-Connecting-IP", out var cfConnectionIp)
                 ? cfConnectionIp
                 : default);
-    
+
     await next(httpContext);
 
     var dataContext = httpContext.RequestServices.GetRequiredService<DataContext>();
