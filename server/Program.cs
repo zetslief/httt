@@ -69,8 +69,13 @@ app.MapGet("/articles/{startIndex}/{length}", async (DataContext ctx, int startI
         .Take(length)
         .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
         .ToArrayAsync();
+    var ranges = Enumerable.Range(0, totalCount)
+        .Chunk(length)
+        .Select(range => new ArticleRange(range.First(), length))
+        .ToList();
     var htmlBuilder = new HtmlBuilder()
         .AddGoHomeHeader()
+        .AddRanges(ranges)
         .AddArticleList($"Articles: {startIndex} - {(startIndex + articles.Length)}", articles);
     return Results.Content(htmlBuilder.Build(), "text/html");
 });
@@ -117,6 +122,14 @@ static class HtmlBuilderExtensions
             .AddA("/", "Home")
         );
 
+    public static HtmlBuilder AddRanges(this HtmlBuilder rangesBuilder, IEnumerable<ArticleRange> ranges) => rangesBuilder
+        .WithTag("div", builder =>
+        {
+            builder.AddHeader(2, "More articles:");
+            foreach (var range in ranges)
+                builder.AddA($"/articles/{range.Start}/{range.Length}", $"{range.Start}-{(range.Start + range.Length)}");
+        });
+
     public static HtmlBuilder AddFlexBox(this HtmlBuilder flexBoxBuilder, IEnumerable<Action<HtmlBuilder>> itemBuilders) => flexBoxBuilder
         .WithTag("div", builder =>
         {
@@ -150,6 +163,7 @@ static class HtmlBuilderExtensions
 record ArticleLink(Guid Id, string Title, DateTime CreatedOn, int ViewCount);
 record Article(string Title, IEnumerable<Section>? Sections);
 record Section(string Title, string Content, IEnumerable<Section>? SubSection);
+record ArticleRange(int Start, int Length);
 
 sealed class HtmlBuilder
 {
