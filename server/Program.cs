@@ -106,18 +106,16 @@ app.Run();
 static class HtmlBuilderExtensions
 {
     public static HtmlBuilder AddMainHeader(this HtmlBuilder builder) =>
-        builder.WithTag("div", static builder =>
-        {
-            builder.AddHeader(1, "Your Daily Slop");
-            builder.AddA("./articles/1/1000", "All articles");
-        });
+        builder.WithTag("div", static builder => builder
+            .AddHeader(1, "Your Daily Slop")
+            .AddA("./articles/1/1000", "All articles")
+        );
 
     public static HtmlBuilder AddGoHomeHeader(this HtmlBuilder builder) =>
-        builder.WithTag("div", static builder =>
-        {
-            builder.AddHeader(1, "Your Daily Slop");
-            builder.AddA("/", "Home");
-        });
+        builder.WithTag("div", static builder => builder
+            .AddHeader(1, "Your Daily Slop")
+            .AddA("/", "Home")
+        );
 
     public static HtmlBuilder AddFlexBox(this HtmlBuilder flexBoxBuilder, IEnumerable<Action<HtmlBuilder>> itemBuilders) => flexBoxBuilder
         .WithTag("div", builder =>
@@ -130,11 +128,9 @@ static class HtmlBuilderExtensions
         {
             builder.AddHeader(1, article.Title);
             foreach (var section in article.Sections ?? [])
-            {
                 builder
                     .AddHeader(2, section.Title)
                     .AddTag("p", section.Content);
-            }
         });
 
     public static HtmlBuilder AddArticleList(this HtmlBuilder articleListBuilder, string title, IReadOnlyCollection<ArticleLink> articles) => articleListBuilder
@@ -143,12 +139,10 @@ static class HtmlBuilderExtensions
             .WithTag("ol", listBuilder =>
             {
                 foreach (var article in articles)
-                {
                     listBuilder.WithTag("li", listItemBuilder => listItemBuilder
                             .AddA($"/article/{article.Id}", article.Title)
                             .AddTag("p", $"{article.CreatedOn} Views: {article.ViewCount}")
                     );
-                }
             })
         );
 }
