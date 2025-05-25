@@ -34,12 +34,18 @@ app.MapGet("/", async (DataContext ctx) =>
         .Take(500)
         .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
         .ToArrayAsync();
-    var html = ToFlexBox([
+    var htmlBuilder = new HtmlBuilder();
+    htmlBuilder.WithTag("div", static builder =>
+    {
+        builder.AddHeader(1, "Your Daily Slop");
+        builder.AddA("./articles/1/1000", "All articles");
+    });
+    ToFlexBox(htmlBuilder, [
         ToArticleListHtml("New", newestArticles),
         ToArticleListHtml("Top viewed", topViewedArticles),
         ToArticleListHtml("Least viewed", leastViewedArticles),
     ]);
-    return Results.Content(html, "text/html");
+    return Results.Content(htmlBuilder.Build(), "text/html");
 });
 
 app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) =>
@@ -59,7 +65,6 @@ app.MapGet("/articles/{startIndex}/{length}", async (DataContext ctx, int startI
     if (length <= 0 || startIndex < 0) return Results.BadRequest($"Invalid path parameters: {length}, {startIndex}.");
     var totalCount = await ctx.Articles.CountAsync();
     if (totalCount <= startIndex) return Results.BadRequest($"There are {totalCount} of articles. Cannot show {length} articles at {startIndex}");
-
     var articles = await ctx.Articles.OrderByDescending(a => a.CreatedOn)
         .Skip(startIndex)
         .Take(length)
@@ -96,12 +101,11 @@ app.Use(async (httpContext, next) =>
 
 app.Run();
 
-static string ToFlexBox(IEnumerable<string> children) => new HtmlBuilder()
+static HtmlBuilder ToFlexBox(HtmlBuilder builder, IEnumerable<string> children) => builder
     .WithTag("div", builder =>
     {
         foreach (var child in children) builder.AddTag("div", child, style: "flex: 1 1 0;");
-    }, style: "display: flex;;")
-    .Build();
+    }, style: "display: flex;;");
 
 static string ToArticleListHtml(string title, IReadOnlyCollection<ArticleLink> articles) => new HtmlBuilder()
     .WithTag("div", builder => builder
