@@ -37,9 +37,9 @@ app.MapGet("/", async (DataContext ctx) =>
     var htmlBuilder = new HtmlBuilder()
         .AddMainHeader()
         .AddFlexBox([
-            ToArticleListHtml("New", newestArticles),
-            ToArticleListHtml("Top viewed", topViewedArticles),
-            ToArticleListHtml("Least viewed", leastViewedArticles),
+            itemBuilder => itemBuilder.AddArticleList("New", newestArticles),
+            itemBuilder => itemBuilder.AddArticleList("Top viewed", topViewedArticles),
+            itemBuilder => itemBuilder.AddArticleList("Least viewed", leastViewedArticles),
         ]);
     return Results.Content(htmlBuilder.Build(), "text/html");
 });
@@ -69,7 +69,10 @@ app.MapGet("/articles/{startIndex}/{length}", async (DataContext ctx, int startI
         .Take(length)
         .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
         .ToArrayAsync();
-    return Results.Content(ToArticleListHtml($"Articles: {startIndex} - {(startIndex + articles.Length)}", articles), "text/html");
+    var htmlBuilder = new HtmlBuilder()
+        .AddGoHomeHeader()
+        .AddArticleList($"Articles: {startIndex} - {(startIndex + articles.Length)}", articles);
+    return Results.Content(htmlBuilder.Build(), "text/html");
 });
 
 app.Use(async (httpContext, next) =>
@@ -100,21 +103,6 @@ app.Use(async (httpContext, next) =>
 
 app.Run();
 
-static string ToArticleListHtml(string title, IReadOnlyCollection<ArticleLink> articles) => new HtmlBuilder()
-    .WithTag("div", builder => builder
-        .AddHeader(1, title)
-        .WithTag("ol", listBuilder =>
-        {
-            foreach (var article in articles)
-            {
-                listBuilder.WithTag("li", listItemBuilder => listItemBuilder
-                        .AddA($"/article/{article.Id}", article.Title)
-                        .AddTag("p", $"{article.CreatedOn} Views: {article.ViewCount}")
-                );
-            }
-        })
-    ).Build();
-
 static class HtmlBuilderExtensions
 {
     public static HtmlBuilder AddMainHeader(this HtmlBuilder builder) =>
@@ -131,10 +119,10 @@ static class HtmlBuilderExtensions
             builder.AddA("/", "Home");
         });
 
-    public static HtmlBuilder AddFlexBox(this HtmlBuilder flexBoxBuilder, IEnumerable<string> children) => flexBoxBuilder
+    public static HtmlBuilder AddFlexBox(this HtmlBuilder flexBoxBuilder, IEnumerable<Action<HtmlBuilder>> itemBuilders) => flexBoxBuilder
         .WithTag("div", builder =>
         {
-            foreach (var child in children) builder.AddTag("div", child, style: "flex: 1 1 0;");
+            foreach (var itemBuilder in itemBuilders) builder.WithTag("div", itemBuilder, style: "flex: 1 1 0;");
         }, style: "display: flex;");
 
     public static HtmlBuilder AddArticle(this HtmlBuilder articleBuilder, Article article) => articleBuilder
@@ -148,6 +136,21 @@ static class HtmlBuilderExtensions
                     .AddTag("p", section.Content);
             }
         });
+
+    public static HtmlBuilder AddArticleList(this HtmlBuilder articleListBuilder, string title, IReadOnlyCollection<ArticleLink> articles) => articleListBuilder
+        .WithTag("div", builder => builder
+            .AddHeader(1, title)
+            .WithTag("ol", listBuilder =>
+            {
+                foreach (var article in articles)
+                {
+                    listBuilder.WithTag("li", listItemBuilder => listItemBuilder
+                            .AddA($"/article/{article.Id}", article.Title)
+                            .AddTag("p", $"{article.CreatedOn} Views: {article.ViewCount}")
+                    );
+                }
+            })
+        );
 }
 
 record ArticleLink(Guid Id, string Title, DateTime CreatedOn, int ViewCount);
