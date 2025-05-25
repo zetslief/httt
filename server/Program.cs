@@ -34,17 +34,13 @@ app.MapGet("/", async (DataContext ctx) =>
         .Take(500)
         .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
         .ToArrayAsync();
-    var htmlBuilder = new HtmlBuilder();
-    htmlBuilder.WithTag("div", static builder =>
-    {
-        builder.AddHeader(1, "Your Daily Slop");
-        builder.AddA("./articles/1/1000", "All articles");
-    });
-    ToFlexBox(htmlBuilder, [
-        ToArticleListHtml("New", newestArticles),
-        ToArticleListHtml("Top viewed", topViewedArticles),
-        ToArticleListHtml("Least viewed", leastViewedArticles),
-    ]);
+    var htmlBuilder = new HtmlBuilder()
+        .AddMainHeader()
+        .AddFlexBox([
+            ToArticleListHtml("New", newestArticles),
+            ToArticleListHtml("Top viewed", topViewedArticles),
+            ToArticleListHtml("Least viewed", leastViewedArticles),
+        ]);
     return Results.Content(htmlBuilder.Build(), "text/html");
 });
 
@@ -53,10 +49,13 @@ app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) =>
     await ctx.Articles.Where(a => a.ArticleId == articleId)
         .ExecuteUpdateAsync(s => s.SetProperty(a => a.ViewCount, a => a.ViewCount + 1));
     var article = await ctx.Articles.Include(article => article.Sections).SingleAsync(a => a.ArticleId == articleId);
-    return Results.Content(ArticleToHtml(new(
-        article.Title,
-        article.Sections?.Select(s => new Section(string.Empty, s.Content, null)).ToArray() ?? []
-    )), "text/html");
+    var htmlBuilder = new HtmlBuilder()
+        .AddGoHomeHeader()
+        .AddArticle(new(
+            article.Title,
+            article.Sections?.Select(s => new Section(string.Empty, s.Content, null)).ToArray() ?? [])
+        );
+    return Results.Content(htmlBuilder.Build(), "text/html");
 });
 
 app.MapGet("/articles/{startIndex}/{length}", async (DataContext ctx, int startIndex, int length) =>
@@ -101,12 +100,6 @@ app.Use(async (httpContext, next) =>
 
 app.Run();
 
-static HtmlBuilder ToFlexBox(HtmlBuilder builder, IEnumerable<string> children) => builder
-    .WithTag("div", builder =>
-    {
-        foreach (var child in children) builder.AddTag("div", child, style: "flex: 1 1 0;");
-    }, style: "display: flex;;");
-
 static string ToArticleListHtml(string title, IReadOnlyCollection<ArticleLink> articles) => new HtmlBuilder()
     .WithTag("div", builder => builder
         .AddHeader(1, title)
@@ -122,17 +115,40 @@ static string ToArticleListHtml(string title, IReadOnlyCollection<ArticleLink> a
         })
     ).Build();
 
-static string ArticleToHtml(Article article) => new HtmlBuilder()
-    .WithTag("div", builder =>
-    {
-        builder.AddHeader(1, article.Title);
-        foreach (var section in article.Sections ?? [])
+static class HtmlBuilderExtensions
+{
+    public static HtmlBuilder AddMainHeader(this HtmlBuilder builder) =>
+        builder.WithTag("div", static builder =>
         {
-            builder
-                .AddHeader(2, section.Title)
-                .AddTag("p", section.Content);
-        }
-    }).Build();
+            builder.AddHeader(1, "Your Daily Slop");
+            builder.AddA("./articles/1/1000", "All articles");
+        });
+
+    public static HtmlBuilder AddGoHomeHeader(this HtmlBuilder builder) =>
+        builder.WithTag("div", static builder =>
+        {
+            builder.AddHeader(1, "Your Daily Slop");
+            builder.AddA("/", "Home");
+        });
+
+    public static HtmlBuilder AddFlexBox(this HtmlBuilder flexBoxBuilder, IEnumerable<string> children) => flexBoxBuilder
+        .WithTag("div", builder =>
+        {
+            foreach (var child in children) builder.AddTag("div", child, style: "flex: 1 1 0;");
+        }, style: "display: flex;");
+
+    public static HtmlBuilder AddArticle(this HtmlBuilder articleBuilder, Article article) => articleBuilder
+        .WithTag("div", builder =>
+        {
+            builder.AddHeader(1, article.Title);
+            foreach (var section in article.Sections ?? [])
+            {
+                builder
+                    .AddHeader(2, section.Title)
+                    .AddTag("p", section.Content);
+            }
+        });
+}
 
 record ArticleLink(Guid Id, string Title, DateTime CreatedOn, int ViewCount);
 record Article(string Title, IEnumerable<Section>? Sections);
