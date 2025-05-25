@@ -37,9 +37,9 @@ app.MapGet("/", async (DataContext ctx) =>
     var htmlBuilder = new HtmlBuilder()
         .AddMainHeader()
         .AddFlexBox([
-            itemBuilder => itemBuilder.AddArticleList("New", newestArticles),
-            itemBuilder => itemBuilder.AddArticleList("Top viewed", topViewedArticles),
-            itemBuilder => itemBuilder.AddArticleList("Least viewed", leastViewedArticles),
+            itemBuilder => itemBuilder.AddArticleList("New", 0, newestArticles),
+            itemBuilder => itemBuilder.AddArticleList("Top viewed", 0, topViewedArticles),
+            itemBuilder => itemBuilder.AddArticleList("Least viewed", 0, leastViewedArticles),
         ]);
     return Results.Content(htmlBuilder.Build(), "text/html");
 });
@@ -76,7 +76,7 @@ app.MapGet("/articles/{startIndex}/{length}", async (DataContext ctx, int startI
     var htmlBuilder = new HtmlBuilder()
         .AddGoHomeHeader()
         .AddRanges(ranges)
-        .AddArticleList($"Articles: {startIndex} - {(startIndex + articles.Length)}", articles);
+        .AddArticleList($"Articles: {startIndex} - {(startIndex + articles.Length)}", startIndex, articles);
     return Results.Content(htmlBuilder.Build(), "text/html");
 });
 
@@ -146,7 +146,7 @@ static class HtmlBuilderExtensions
                     .AddTag("p", section.Content);
         });
 
-    public static HtmlBuilder AddArticleList(this HtmlBuilder articleListBuilder, string title, IReadOnlyCollection<ArticleLink> articles) => articleListBuilder
+    public static HtmlBuilder AddArticleList(this HtmlBuilder articleListBuilder, string title, int startIndex, IReadOnlyCollection<ArticleLink> articles) => articleListBuilder
         .WithTag("div", builder => builder
             .AddHeader(1, title)
             .WithTag("ol", listBuilder =>
@@ -156,7 +156,9 @@ static class HtmlBuilderExtensions
                             .AddA($"/article/{article.Id}", article.Title)
                             .AddTag("p", $"{article.CreatedOn} Views: {article.ViewCount}")
                     );
-            })
+            },
+            style: "list-style-position: inside;",
+            attributes: $"start='{startIndex}'")
         );
 }
 
@@ -188,9 +190,9 @@ sealed class HtmlBuilder
         return this;
     }
 
-    public HtmlBuilder WithTag(string tag, Action<HtmlBuilder> buildInner, string? style = null)
+    public HtmlBuilder WithTag(string tag, Action<HtmlBuilder> buildInner, string? style = null, string? attributes = null)
     {
-        AppendLine($"<{tag} style='{style ?? string.Empty}'>");
+        AppendLine($"<{tag} style='{style ?? string.Empty}' {attributes ?? string.Empty}>");
         indent += 1;
         buildInner(this);
         indent -= 1;
