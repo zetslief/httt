@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using gen;
 using Microsoft.EntityFrameworkCore;
@@ -17,29 +19,44 @@ var app = builder.Build();
 
 app.UseStaticFiles();
 
+static Expression<Func<gen.Article, ArticleLink>> ToArticleLink() => article => new(
+    article.ArticleId,
+    article.Title,
+    article.CreatedOn,
+    article.ViewCount
+);
+
+const int titleMaxLength = 200;
+static ArticleLink TruncateArticleTitle(ArticleLink articleLink) => articleLink with
+{
+    Title = articleLink.Title.Length > titleMaxLength
+        ? $"{articleLink.Title[..(titleMaxLength - 3)]}..."
+        : articleLink.Title
+};
+
 app.MapGet("/", async (DataContext ctx) =>
 {
     var newestArticles = await ctx.Articles
         .OrderByDescending(a => a.CreatedOn)
         .Take(500)
-        .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
+        .Select(ToArticleLink())
         .ToArrayAsync();
     var topViewedArticles = await ctx.Articles
         .OrderByDescending(a => a.ViewCount)
         .Take(500)
-        .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
+        .Select(ToArticleLink())
         .ToArrayAsync();
     var leastViewedArticles = await ctx.Articles
         .OrderBy(a => a.ViewCount)
         .Take(500)
-        .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
+        .Select(ToArticleLink())
         .ToArrayAsync();
     var htmlBuilder = new HtmlBuilder()
         .AddMainHeader()
         .AddFlexBox([
-            itemBuilder => itemBuilder.AddArticleList("New", 0, newestArticles),
-            itemBuilder => itemBuilder.AddArticleList("Top viewed", 0, topViewedArticles),
-            itemBuilder => itemBuilder.AddArticleList("Least viewed", 0, leastViewedArticles),
+            itemBuilder => itemBuilder.AddArticleList("New", 0, newestArticles.Select(TruncateArticleTitle)),
+            itemBuilder => itemBuilder.AddArticleList("Top viewed", 0, topViewedArticles.Select(TruncateArticleTitle)),
+            itemBuilder => itemBuilder.AddArticleList("Least viewed", 0, leastViewedArticles.Select(TruncateArticleTitle)),
         ]);
     return Results.Content(htmlBuilder.Build(), "text/html");
 });
@@ -67,7 +84,7 @@ app.MapGet("/articles/{startIndex}/{length}", async (DataContext ctx, int startI
     var articles = await ctx.Articles.OrderByDescending(a => a.CreatedOn)
         .Skip(startIndex)
         .Take(length)
-        .Select(a => new ArticleLink(a.ArticleId, a.Title, a.CreatedOn, a.ViewCount))
+        .Select(ToArticleLink())
         .ToArrayAsync();
     var ranges = Enumerable.Range(0, totalCount)
         .Chunk(length)
@@ -76,7 +93,10 @@ app.MapGet("/articles/{startIndex}/{length}", async (DataContext ctx, int startI
     var htmlBuilder = new HtmlBuilder()
         .AddGoHomeHeader()
         .AddRanges(ranges)
-        .AddArticleList($"Articles: {startIndex} - {(startIndex + articles.Length)}", startIndex, articles);
+        .AddArticleList(
+            $"Articles: {startIndex} - {(startIndex + articles.Length)}",
+            startIndex,
+            articles.Select(TruncateArticleTitle));
     return Results.Content(htmlBuilder.Build(), "text/html");
 });
 
@@ -146,7 +166,7 @@ static class HtmlBuilderExtensions
                     .AddTag("p", section.Content);
         });
 
-    public static HtmlBuilder AddArticleList(this HtmlBuilder articleListBuilder, string title, int startIndex, IReadOnlyCollection<ArticleLink> articles) => articleListBuilder
+    public static HtmlBuilder AddArticleList(this HtmlBuilder articleListBuilder, string title, int startIndex, IEnumerable<ArticleLink> articles) => articleListBuilder
         .WithTag("div", builder => builder
             .AddHeader(1, title)
             .WithTag("ol", listBuilder =>
