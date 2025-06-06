@@ -10,7 +10,6 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
 
     public DbSet<Article> Articles { get; set; }
     public DbSet<Section> Sections { get; set; }
-
     public DbSet<Request> Requests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -25,6 +24,11 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
         modelBuilder.Entity<Topic>()
             .Property(t => t.Name)
             .HasMaxLength(512);
+        
+        modelBuilder.Entity<Article>()
+            .HasIndex(e => e.CreatedOn);
+        modelBuilder.Entity<Article>()
+            .HasIndex(e => e.ViewCount);
     }
 }
 

@@ -19,21 +19,6 @@ var app = builder.Build();
 
 app.UseStaticFiles();
 
-static Expression<Func<gen.Article, ArticleLink>> ToArticleLink() => article => new(
-    article.ArticleId,
-    article.Title,
-    article.CreatedOn,
-    article.ViewCount
-);
-
-const int titleMaxLength = 200;
-static ArticleLink TruncateArticleTitle(ArticleLink articleLink) => articleLink with
-{
-    Title = articleLink.Title.Length > titleMaxLength
-        ? $"{articleLink.Title[..(titleMaxLength - 3)]}..."
-        : articleLink.Title
-};
-
 app.MapGet("/", async (DataContext ctx) =>
 {
     var newestArticles = await ctx.Articles
@@ -108,9 +93,13 @@ app.Use(async (httpContext, next) =>
             : (httpContext.Request.Headers.TryGetValue("Cf-Connecting-IP", out var cfConnectionIp)
                 ? cfConnectionIp
                 : default);
-
+    
+    var beforeNextMiddleware = stopwatch.Elapsed;
+    
     await next(httpContext);
-
+    
+    var afterNextMiddleware = stopwatch.Elapsed;
+    
     var dataContext = httpContext.RequestServices.GetRequiredService<DataContext>();
     var request = await dataContext.Requests.AddAsync(new()
     {
@@ -124,9 +113,26 @@ app.Use(async (httpContext, next) =>
     await dataContext.SaveChangesAsync();
     stopwatch.Stop();
     Console.WriteLine($"{request.Entity.ResponseStatusCode} > {request.Entity.Path} | {request.Entity.CallerIP} | Request duration: {stopwatch.Elapsed}");
+    Console.WriteLine($"\tMiddleware: {(afterNextMiddleware - beforeNextMiddleware)} | Log: {(stopwatch.Elapsed - afterNextMiddleware)}");
 });
 
 app.Run();
+
+const int titleMaxLength = 200;
+
+static Expression<Func<gen.Article, ArticleLink>> ToArticleLink() => article => new(
+    article.ArticleId,
+    article.Title,
+    article.CreatedOn,
+    article.ViewCount
+);
+
+static ArticleLink TruncateArticleTitle(ArticleLink articleLink) => articleLink with
+{
+    Title = articleLink.Title.Length > titleMaxLength
+        ? $"{articleLink.Title[..(titleMaxLength - 3)]}..."
+        : articleLink.Title
+};
 
 static class HtmlBuilderExtensions
 {
