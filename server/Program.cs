@@ -1,9 +1,9 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using gen;
 using Microsoft.EntityFrameworkCore;
+using server;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -141,104 +141,7 @@ static ArticleLink TruncateArticleTitle(ArticleLink articleLink) => articleLink 
         : articleLink.Title
 };
 
-static class HtmlBuilderExtensions
-{
-    public static HtmlBuilder AddMainHeader(this HtmlBuilder builder) =>
-        builder.WithTag("div", static builder => builder
-            .AddHeader(1, "Your Daily Slop")
-            .AddA("./articles/1/1000", "All articles")
-        );
-
-    public static HtmlBuilder AddGoHomeHeader(this HtmlBuilder builder) =>
-        builder.WithTag("div", static builder => builder
-            .AddHeader(1, "Your Daily Slop")
-            .AddA("/", "Home")
-        );
-
-    public static HtmlBuilder AddRanges(this HtmlBuilder rangesBuilder, IEnumerable<ArticleRange> ranges) => rangesBuilder
-        .WithTag("div", builder =>
-        {
-            builder.AddHeader(2, "More articles:");
-            foreach (var range in ranges)
-                builder.AddA($"/articles/{range.Start}/{range.Length}", $"{range.Start}-{(range.Start + range.Length)}");
-        });
-
-    public static HtmlBuilder AddFlexBox(this HtmlBuilder flexBoxBuilder, IEnumerable<Action<HtmlBuilder>> itemBuilders) => flexBoxBuilder
-        .WithTag("div", builder =>
-        {
-            foreach (var itemBuilder in itemBuilders) builder.WithTag("div", itemBuilder, style: "flex: 1 1 0;");
-        }, style: "display: flex;");
-
-    public static HtmlBuilder AddArticle(this HtmlBuilder articleBuilder, Article article) => articleBuilder
-        .WithTag("div", builder =>
-        {
-            builder.AddHeader(1, article.Title);
-            foreach (var section in article.Sections ?? [])
-                builder
-                    .AddHeader(2, section.Title)
-                    .AddTag("p", section.Content);
-        });
-
-    public static HtmlBuilder AddArticleList(this HtmlBuilder articleListBuilder, string title, int startIndex, IEnumerable<ArticleLink> articles) => articleListBuilder
-        .WithTag("div", builder => builder
-            .AddHeader(1, title)
-            .WithTag("ol", listBuilder =>
-            {
-                foreach (var article in articles)
-                    listBuilder.WithTag("li", listItemBuilder => listItemBuilder
-                            .AddA($"/article/{article.Id}", article.Title)
-                            .AddTag("p", $"{article.CreatedOn} Views: {article.ViewCount}")
-                    );
-            },
-            style: "list-style-position: inside;",
-            attributes: $"start='{startIndex}'")
-        );
-}
-
-record ArticleLink(Guid Id, string Title, DateTime CreatedOn, int ViewCount);
-record Article(string Title, IEnumerable<Section>? Sections);
-record Section(string Title, string Content, IEnumerable<Section>? SubSection);
-record ArticleRange(int Start, int Length);
-
-sealed class HtmlBuilder
-{
-    private readonly StringBuilder builder = new(1024);
-    private int indent = 0;
-
-    public HtmlBuilder AddHeader(int number, string content)
-    {
-        AppendLine($"\t<h{number}>{content}</h{number}>");
-        return this;
-    }
-
-    public HtmlBuilder AddA(string href, string content)
-    {
-        AppendLine($"<a href='{href}'>{content}</a>");
-        return this;
-    }
-
-    public HtmlBuilder AddTag(string tag, string content, string? style = null)
-    {
-        AppendLine($"<{tag} style='{style ?? string.Empty}'>{content}</{tag}>");
-        return this;
-    }
-
-    public HtmlBuilder WithTag(string tag, Action<HtmlBuilder> buildInner, string? style = null, string? attributes = null)
-    {
-        AppendLine($"<{tag} style='{style ?? string.Empty}' {attributes ?? string.Empty}>");
-        indent += 1;
-        buildInner(this);
-        indent -= 1;
-        AppendLine($"</{tag}>");
-        return this;
-    }
-
-    private void AppendLine(string content)
-    {
-        for (int i = 0; i < indent; ++i)
-            builder.Append('\t');
-        builder.AppendLine(content);
-    }
-
-    public string Build() => builder.ToString();
-}
+public record ArticleLink(Guid Id, string Title, DateTime CreatedOn, int ViewCount);
+public record Article(string Title, IEnumerable<Section>? Sections);
+public record Section(string Title, string Content, IEnumerable<Section>? SubSection);
+public record ArticleRange(int Start, int Length);
