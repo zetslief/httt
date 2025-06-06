@@ -93,13 +93,13 @@ app.Use(async (httpContext, next) =>
             : (httpContext.Request.Headers.TryGetValue("Cf-Connecting-IP", out var cfConnectionIp)
                 ? cfConnectionIp
                 : default);
-    
+
     var beforeNextMiddleware = stopwatch.Elapsed;
-    
+
     await next(httpContext);
-    
+
     var afterNextMiddleware = stopwatch.Elapsed;
-    
+
     var dataContext = httpContext.RequestServices.GetRequiredService<DataContext>();
     var request = await dataContext.Requests.AddAsync(new()
     {
@@ -112,8 +112,15 @@ app.Use(async (httpContext, next) =>
     });
     await dataContext.SaveChangesAsync();
     stopwatch.Stop();
-    Console.WriteLine($"{request.Entity.ResponseStatusCode} > {request.Entity.Path} | {request.Entity.CallerIP} | Request duration: {stopwatch.Elapsed}");
-    Console.WriteLine($"\tMiddleware: {(afterNextMiddleware - beforeNextMiddleware)} | Log: {(stopwatch.Elapsed - afterNextMiddleware)}");
+    var logger = httpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation(
+        "{EntityResponseStatusCode} > {EntityPath} | {EntityCallerIp} | Total duration: {StopwatchElapsed} | Middleware: {BeforeNextMiddleware} | Log: {AfterNextMiddleware}",
+        request.Entity.ResponseStatusCode,
+        request.Entity.Path,
+        request.Entity.CallerIP,
+        stopwatch.Elapsed.TotalMilliseconds,
+        (afterNextMiddleware - beforeNextMiddleware).TotalMilliseconds,
+        (stopwatch.Elapsed - afterNextMiddleware).TotalMilliseconds);
 });
 
 app.Run();

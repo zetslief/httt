@@ -24,7 +24,7 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
         modelBuilder.Entity<Topic>()
             .Property(t => t.Name)
             .HasMaxLength(512);
-        
+
         modelBuilder.Entity<Article>()
             .HasIndex(e => e.CreatedOn);
         modelBuilder.Entity<Article>()
