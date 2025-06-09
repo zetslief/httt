@@ -39,8 +39,15 @@ public static class Gemini
             new SystemInstruction([new("don't use lists"), new("use only imaginary facts"), new(systemInstruction)])
         );
         var response = await client.PostAsJsonAsync(uri, request, options);
-        var generateContentResponse = await response.Content.ReadFromJsonAsync<GenerateContentResponse>(options);
-        return generateContentResponse?.Candidates?.Single().Content.Parts.Single().Text
-            ?? $"Error: {response}";
+        try
+        {
+            var generateContentResponse = await response.Content.ReadFromJsonAsync<GenerateContentResponse>(options);
+            return generateContentResponse?.Candidates?.Single().Content.Parts.Single().Text
+                   ?? $"Error: {response}";
+        }
+        catch (Exception e)
+        {
+            return $"Error: {e}: {e.Message}{Environment.NewLine}{e.StackTrace}";
+        }
     }
 }
