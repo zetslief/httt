@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Linq;
 using System.Collections.Immutable;
 using gen;
 
@@ -10,7 +11,9 @@ Console.WriteLine(filePath);
 if (!Path.Exists(filePath)) throw new ArgumentException($"{filePath} does not exist!");
 
 var content = File.ReadAllText(filePath);
-var items = JsonSerializer.Deserialize<ImmutableArray<string>>(content);
+var items = JsonSerializer.Deserialize<ImmutableArray<string>>(content)
+    .Distinct()
+    .ToImmutableArray();
 
 Console.WriteLine($"{items.Length} found.");
 
