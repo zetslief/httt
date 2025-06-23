@@ -5,7 +5,7 @@ using static Gemini.Gemini;
 
 var logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger("Program");
 
-Topic[] topics = [];
+Topic[] topics;
 await using (var ctx = new DataContextFactory().CreateDbContext(args))
 {
     topics = await ctx.Topics.Include(t => t.Source).ToArrayAsync();

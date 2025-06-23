@@ -5,7 +5,7 @@ public static class HtmlBuilderExtensions
     public static HtmlBuilder AddMainHeader(this HtmlBuilder builder) =>
         builder.WithTag("div", static builder => builder
             .AddHeader(1, "Your Daily Slop")
-            .AddA("./articles/1/1000", "All articles")
+            .AddA("./articles?startIndex=0&length=1000", "All articles")
         );
 
     public static HtmlBuilder AddGoHomeHeader(this HtmlBuilder builder) =>
@@ -19,7 +19,7 @@ public static class HtmlBuilderExtensions
         {
             builder.AddHeader(2, "More articles:");
             foreach (var range in ranges)
-                builder.AddA($"/articles/{range.Start}/{range.Length}", $"{range.Start}-{(range.Start + range.Length)}");
+                builder.AddA($"/articles?startIndex={range.Start}&length={range.Length}", $"{range.Start}-{(range.Start + range.Length)}");
         });
 
     public static HtmlBuilder AddFlexBox(this HtmlBuilder flexBoxBuilder, IEnumerable<Action<HtmlBuilder>> itemBuilders) => flexBoxBuilder
