@@ -4,12 +4,16 @@ namespace server;
 
 public sealed class HtmlBuilder
 {
-    private readonly StringBuilder builder = new(1024);
-    private int indent = 0;
+    private readonly StringBuilder _builder = new(1024);
+    private int _indent = 0;
+
+    private HtmlBuilder()
+    {
+    }
 
     public HtmlBuilder AddHeader(int number, string content)
     {
-        AppendLine($"\t<h{number}>{content}</h{number}>");
+        AppendLine($"<h{number}>{content}</h{number}>");
         return this;
     }
 
@@ -28,19 +32,37 @@ public sealed class HtmlBuilder
     public HtmlBuilder WithTag(string tag, Action<HtmlBuilder> buildInner, string? style = null, string? attributes = null)
     {
         AppendLine($"<{tag} style='{style ?? string.Empty}' {attributes ?? string.Empty}>");
-        indent += 1;
+        _indent += 1;
         buildInner(this);
-        indent -= 1;
+        _indent -= 1;
         AppendLine($"</{tag}>");
         return this;
     }
 
     private void AppendLine(string content)
     {
-        for (int i = 0; i < indent; ++i)
-            builder.Append('\t');
-        builder.AppendLine(content);
+        for (int i = 0; i < _indent; ++i)
+            _builder.Append('\t');
+        _builder.AppendLine(content);
     }
 
-    public string Build() => builder.ToString();
+    public string Build()
+    {
+        _indent--;
+        this.AppendLine("</body>");
+        _indent--;
+        _builder.AppendLine("</html>");
+        return _builder.ToString();
+    }
+
+    public static HtmlBuilder Create()
+    {
+        HtmlBuilder builder = new();
+        builder.AppendLine("<!doctype html>");
+        builder.AppendLine("<html>");
+        builder._indent++;
+        builder.AppendLine("<body>");
+        builder._indent++;
+        return builder;
+    }
 }
