@@ -25,4 +25,9 @@ public static class StringMetrics
 
         return 1 + Math.Min(first, Math.Min(second, third));
     }
+
+    public static int LevensteinDistanceMatrix(ReadOnlySpan<char> a, ReadOnlySpan<char> b)
+    {
+        throw new NotImplementedException(nameof(LevensteinDistanceMatrix));
+    }
 }

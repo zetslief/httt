@@ -3,3 +3,4 @@ bin/
 articles/
 *.DotSettings.user
 .idea/
+**/BenchmarkDotNet.Artifacts/

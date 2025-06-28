@@ -52,7 +52,7 @@ app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) =>
         .ExecuteUpdateAsync(s => s.SetProperty(a => a.ViewCount, a => a.ViewCount + 1));
     var article = await ctx.Articles.Include(article => article.Sections).SingleAsync(a => a.ArticleId == articleId);
     var htmlBuilder = HtmlBuilder.Create()
-        .AddGoHomeHeader()
+        .AddGoHomeHeader("Article")
         .AddArticle(new(
             article.Title,
             article.Sections?.Select(s => new Section(string.Empty, s.Content, null)).ToArray() ?? [])
@@ -81,7 +81,7 @@ static async Task<IResult> GetArticles(DataContext ctx, int startIndex, int leng
         .Select(range => new ArticleRange(range.First(), length))
         .ToList();
     var htmlBuilder = HtmlBuilder.Create()
-        .AddGoHomeHeader()
+        .AddGoHomeHeader("All Articles")
         .AddRanges(ranges)
         .AddArticleList(
             $"Articles: {startIndex} - {(startIndex + articles.Length)}",
