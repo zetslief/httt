@@ -1,6 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-
-if (args.Length < 2)
+﻿if (args.Length < 2)
 {
     PrintError($"Not enough arguments provided. Received {args.Length}: [{string.Join(',', args)}]. Expected 2.");
     ShowHelp();
