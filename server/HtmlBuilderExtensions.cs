@@ -48,7 +48,7 @@ public static class HtmlBuilderExtensions
                     foreach (var article in articles)
                         listBuilder.WithTag("li", listItemBuilder => listItemBuilder
                             .AddA($"/article/{article.Id}", article.Title)
-                            .AddTag("p", $"{article.CreatedOn} Views: {article.ViewCount}")
+                            .AddTag("p", $"{article.CreatedOn:u} Views: {article.ViewCount}")
                         );
                 },
                 style: "list-style-position: inside;",
