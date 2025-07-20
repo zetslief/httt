@@ -26,9 +26,6 @@ public class LevensteinDistance
         [GenerateString(15, 'a'), GenerateString(15, 'b')],
         [GenerateString(16, 'a'), GenerateString(16, 'b')],
         [GenerateString(17, 'a'), GenerateString(17, 'b')],
-        [GenerateString(18, 'a'), GenerateString(18, 'b')],
-        [GenerateString(19, 'a'), GenerateString(19, 'b')],
-        [GenerateString(20, 'a'), GenerateString(20, 'b')],
     ];
 
     private string GenerateString(int length, char @char)
