@@ -5,12 +5,14 @@ public static class HtmlBuilderExtensions
     public static HtmlBuilder AddMainHeader(this HtmlBuilder builder) =>
         builder.WithTag("div", static builder => builder
             .AddHeader(1, "Your Daily Slop")
+            .AddHeader(1, "Home")
             .AddA("./articles?startIndex=0&length=1000", "All articles")
         );
 
     public static HtmlBuilder AddGoHomeHeader(this HtmlBuilder headerBuilder, string currentPageTitle) =>
         headerBuilder.WithTag("div", builder => builder
-            .AddHeader(1, $"{currentPageTitle} - Your Daily Slop")
+            .AddHeader(1, "Your Daily Slop")
+            .AddHeader(1, currentPageTitle)
             .AddA("/", "Home")
         );
 
