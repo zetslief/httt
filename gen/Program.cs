@@ -1,15 +1,28 @@
 ﻿using gen;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
+using Microsoft.EntityFrameworkCore;
 using static Gemini.Gemini;
 
-var logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger("Program");
+var builder = Host.CreateApplicationBuilder();
 
-Topic[] topics;
-await using (var ctx = new DataContextFactory().CreateDbContext(args))
+builder.Services.AddOptions<DatabaseOptions>()
+    .BindConfiguration(DatabaseOptions.Database)
+    .ValidateDataAnnotations();
+
+builder.Services.AddDbContext<DataContext>(DataContextHelpers.Configure);
+
+var app = builder.Build();
+
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
+Topic[] topics = [];
+
+await RunWithDatabaseAsync(app.Services, async ctx =>
 {
     topics = await ctx.Topics.Include(t => t.Source).ToArrayAsync();
-}
+});
 
 logger.LogInformation("There are {TopicsLength} known topics.", topics.Length);
 
@@ -22,13 +35,20 @@ while (true)
     var topicIndex = Random.Shared.Next(topics.Length);
     var topic = topics[topicIndex];
     logger.LogInformation("{Counter} | Writing article about: {TopicName}.", counter, topic.Name);
-    var success = await GenerateArticleAsync(httpClient, topic, logger);
+    var success = await GenerateArticleAsync(app.Services, httpClient, topic, logger);
     var delay = success ? TimeSpan.FromSeconds(1) : TimeSpan.FromMinutes(1);
     logger.LogInformation("{I} | {Success}! Waiting: {Delay}", counter++, success ? "Success" : "Error", delay);
     await Task.Delay(delay);
 }
 
-static async Task<bool> GenerateArticleAsync(HttpClient httpClient, Topic topic, ILogger logger)
+static async Task RunWithDatabaseAsync(IServiceProvider serviceProvider, Func<DataContext, Task> action)
+{
+    await using var scope = serviceProvider.CreateAsyncScope();
+    var ctx = scope.ServiceProvider.GetRequiredService<DataContext>();
+    await action(ctx);
+}
+
+static async Task<bool> GenerateArticleAsync(IServiceProvider serviceProvider, HttpClient httpClient, Topic topic, ILogger logger)
 {
     var topicSourceName = topic.Source.Name.Replace(".json", string.Empty);
     if (topicSourceName.Length == 0)
@@ -50,20 +70,22 @@ static async Task<bool> GenerateArticleAsync(HttpClient httpClient, Topic topic,
 
     var paragraphs = result.Split('\n');
     var articleTitle = $"{paragraphs[0]}";
-    await using var ctx = new DataContextFactory().CreateDbContext([]);
-    var article = ctx.Articles.Add(new()
+    await RunWithDatabaseAsync(serviceProvider, async ctx =>
     {
-        ArticleId = Guid.NewGuid(),
-        Title = articleTitle,
-        Topic = topic,
-        CreatedOn = DateTime.UtcNow
+        var article = ctx.Articles.Add(new()
+        {
+            ArticleId = Guid.NewGuid(),
+            Title = articleTitle,
+            Topic = topic,
+            CreatedOn = DateTime.UtcNow
+        });
+        ctx.Attach(topic);
+        ctx.Attach(topic.Source);
+        await ctx.Sections.AddRangeAsync(paragraphs
+            .Skip(1)
+            .Where(p => p.Length > 5 && !string.IsNullOrWhiteSpace(p))
+            .Select(p => new Section { Content = p, Article = article.Entity }));
+        await ctx.SaveChangesAsync();
     });
-    ctx.Attach(topic);
-    ctx.Attach(topic.Source);
-    await ctx.Sections.AddRangeAsync(paragraphs
-        .Skip(1)
-        .Where(p => p.Length > 5 && !string.IsNullOrWhiteSpace(p))
-        .Select(p => new Section { Content = p, Article = article.Entity }));
-    await ctx.SaveChangesAsync();
     return true;
 }

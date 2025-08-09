@@ -5,15 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using server;
 
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Configuration.AddJsonFile("appsettings.json");
-
-builder.Services.AddDbContext<DataContext>(options =>
-{
-    var dataFile = $"{builder.Configuration.GetRequiredSection("dataFolder").Value}/secret_data.db";
-    options.UseSqlite($"Data Source={dataFile}");
-});
+var builder = CreateHostBuilder(args);
 
 var app = builder.Build();
 
@@ -131,6 +123,17 @@ app.Use(async (httpContext, next) =>
 app.Run();
 
 const int titleMaxLength = 200;
+
+static WebApplicationBuilder CreateHostBuilder(string[] args)
+{
+    var builder = WebApplication.CreateBuilder();
+    builder.Configuration.AddJsonFile("appsettings.json");
+    builder.Services.AddOptions<DatabaseOptions>()
+        .BindConfiguration(DatabaseOptions.Database)
+        .ValidateDataAnnotations();
+    builder.Services.AddDbContext<DataContext>(DataContextHelpers.Configure);
+    return builder;
+}
 
 static Expression<Func<gen.Article, ArticleLink>> ToArticleLink() => article => new(
     article.ArticleId,

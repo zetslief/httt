@@ -1,8 +1,21 @@
 ﻿using System.Text.Json;
 using System.Collections.Immutable;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+
 using gen;
 
 ArgumentOutOfRangeException.ThrowIfLessThan(args.Length, 1, "Data file");
+
+var builder = Host.CreateApplicationBuilder();
+
+builder.Services.AddOptions<DatabaseOptions>()
+    .BindConfiguration(DatabaseOptions.Database)
+    .ValidateDataAnnotations();
+
+builder.Services.AddDbContext<DataContext>(DataContextHelpers.Configure);
+
+var app = builder.Build();
 
 var filePath = args[0];
 Console.WriteLine(filePath);
@@ -16,7 +29,8 @@ var items = JsonSerializer.Deserialize<ImmutableArray<string>>(content)
 
 Console.WriteLine($"{items.Length} found.");
 
-await using var dbContext = new DataContextFactory().CreateDbContext([]);
+await using var scope = app.Services.CreateAsyncScope();
+await using var dbContext = scope.ServiceProvider.GetRequiredService<DataContext>();
 
 var topicSource = await dbContext.TopicSources.AddAsync(new()
 {

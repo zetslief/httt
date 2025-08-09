@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Design;
 
 namespace gen;
 
@@ -29,17 +28,6 @@ public class DataContext(DbContextOptions<DataContext> options) : DbContext(opti
             .HasIndex(e => e.CreatedOn);
         modelBuilder.Entity<Article>()
             .HasIndex(e => e.ViewCount);
-    }
-}
-
-public class DataContextFactory : IDesignTimeDbContextFactory<DataContext>
-{
-    public DataContext CreateDbContext(string[] args)
-    {
-        var optionsBuilder = new DbContextOptionsBuilder<DataContext>();
-        var connectionString = "Data Source=./../../secret_data/secret_data.db";
-        optionsBuilder.UseSqlite(connectionString);
-        return new(optionsBuilder.Options);
     }
 }
 
