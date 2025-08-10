@@ -16,12 +16,12 @@ builder.Services.AddDbContext<DataContext>(DataContextHelpers.Configure);
 
 var app = builder.Build();
 
-var filePath = args[0];
+string filePath = args[0];
 Console.WriteLine(filePath);
 
 if (!Path.Exists(filePath)) throw new ArgumentException($"{filePath} does not exist!");
 
-var content = File.ReadAllText(filePath);
+string content = File.ReadAllText(filePath);
 var items = JsonSerializer.Deserialize<ImmutableArray<string>>(content)
     .Distinct()
     .ToImmutableArray();
