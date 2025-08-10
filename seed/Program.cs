@@ -1,9 +1,8 @@
-﻿using System.Text.Json;
-using System.Collections.Immutable;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-
+﻿using System.Collections.Immutable;
+using System.Text.Json;
 using gen;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 ArgumentOutOfRangeException.ThrowIfLessThan(args.Length, 1, "Data file");
 

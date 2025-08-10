@@ -15,7 +15,7 @@ public class LevensteinDistance
     {
         return StringMetrics.LevensteinDistance(a, b);
     }
-    
+
     public IEnumerable<object[]> Data() =>
     [
         [GenerateString(10, 'a'), GenerateString(10, 'b')],

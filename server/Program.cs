@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
 using gen;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using server;
 
 var builder = CreateHostBuilder(args);
