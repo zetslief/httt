@@ -21,7 +21,7 @@ public record GenerateContentResponse(IEnumerable<Candidate>? Candidates);
 public static class Gemini
 {
     private const string BaseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
-    private const string Model = "gemini-2.0-flash";
+    private const string Model = "gemini-2.5-flash-lite";
     private const string GenerateContent = "generateContent";
 
     public static async Task<string> GenerateTextAsync(HttpClient client, string text, string systemInstruction)
@@ -38,9 +38,9 @@ public static class Gemini
             [new("user", [new(text)])],
             new SystemInstruction([new("don't use lists"), new("use only imaginary facts"), new(systemInstruction)])
         );
-        var response = await client.PostAsJsonAsync(uri, request, options);
         try
         {
+            var response = await client.PostAsJsonAsync(uri, request, options);
             var generateContentResponse = await response.Content.ReadFromJsonAsync<GenerateContentResponse>(options);
             return generateContentResponse?.Candidates?.Single().Content.Parts.Single().Text
                    ?? $"Error: {response}";

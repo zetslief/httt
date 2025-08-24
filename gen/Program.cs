@@ -28,7 +28,10 @@ logger.LogInformation("There are {TopicsLength} known topics.", topics.Length);
 
 if (topics.Length == 0) Environment.Exit(1);
 
-using var httpClient = new HttpClient();
+using var httpClient = new HttpClient()
+{
+    Timeout = TimeSpan.FromMinutes(10)
+};
 int counter = 0;
 while (true)
 {
@@ -59,8 +62,8 @@ static async Task<bool> GenerateArticleAsync(IServiceProvider serviceProvider, H
 
     var result = await GenerateTextAsync(
         httpClient,
-        $"What's new about {topic.Name} from {topic.Source.Name}?",
-        "At least 20000 tokens. Don't use markdown. First sentence is a title maximum 200 symbols long. Story is split into paragraphs.");
+        $"Tell an imaginary story about {topic.Name}? Topic: {topicSourceName}. Use the first sentence is a title.",
+        "Story is split into paragraphs. Write at least 100 paragraphs, each consisting from 10 to 50 sentences. Don't use markdown.");
 
     if (result.StartsWith("Error"))
     {
