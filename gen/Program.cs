@@ -35,10 +35,10 @@ using var httpClient = new HttpClient()
 int counter = 0;
 while (true)
 {
-    var topicIndex = Random.Shared.Next(topics.Length);
+    int topicIndex = Random.Shared.Next(topics.Length);
     var topic = topics[topicIndex];
     logger.LogInformation("{Counter} | Writing article about: {TopicName}.", counter, topic.Name);
-    var success = await GenerateArticleAsync(app.Services, httpClient, topic, logger);
+    bool success = await GenerateArticleAsync(app.Services, httpClient, topic, logger);
     var delay = success ? TimeSpan.FromSeconds(1) : TimeSpan.FromMinutes(1);
     logger.LogInformation("{I} | {Success}! Waiting: {Delay}", counter++, success ? "Success" : "Error", delay);
     await Task.Delay(delay);
@@ -53,14 +53,14 @@ static async Task RunWithDatabaseAsync(IServiceProvider serviceProvider, Func<Da
 
 static async Task<bool> GenerateArticleAsync(IServiceProvider serviceProvider, HttpClient httpClient, Topic topic, ILogger logger)
 {
-    var topicSourceName = topic.Source.Name.Replace(".json", string.Empty);
+    string topicSourceName = topic.Source.Name.Replace(".json", string.Empty);
     if (topicSourceName.Length == 0)
     {
-        logger.LogError("Failed to get topic source name from {TopicSource}. Got: {TopicSourceNamme}", topic.Source, topicSourceName);
+        logger.LogError("Failed to get topic source name from {TopicSource}. Got: {TopicSourceName}", topic.Source, topicSourceName);
         return false;
     }
 
-    var result = await GenerateTextAsync(
+    string result = await GenerateTextAsync(
         httpClient,
         $"Tell an imaginary story about {topic.Name}? Topic: {topicSourceName}. Use the first sentence is a title.",
         "Story is split into paragraphs. Write at least 100 paragraphs, each consisting from 10 to 50 sentences. Don't use markdown.");
@@ -71,8 +71,8 @@ static async Task<bool> GenerateArticleAsync(IServiceProvider serviceProvider, H
         return false;
     }
 
-    var paragraphs = result.Split('\n');
-    var articleTitle = $"{paragraphs[0]}";
+    string[] paragraphs = result.Split('\n');
+    string articleTitle = $"{paragraphs[0]}";
     await RunWithDatabaseAsync(serviceProvider, async ctx =>
     {
         var article = ctx.Articles.Add(new()

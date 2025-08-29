@@ -28,7 +28,7 @@ app.MapGet("/", async (DataContext ctx) =>
         .Take(500)
         .Select(ToArticleLink())
         .ToArrayAsync();
-    var htmlBuilder = HtmlBuilder.Create()
+    var htmlBuilder = HtmlBuilder.Create("Your Daily Slop")
         .AddMainHeader()
         .AddFlexBox([
             itemBuilder => itemBuilder.AddArticleList("New", 0, newestArticles.Select(TruncateArticleTitle)),
@@ -43,7 +43,7 @@ app.MapGet("/article/{articleId}", async (DataContext ctx, Guid articleId) =>
     await ctx.Articles.Where(a => a.ArticleId == articleId)
         .ExecuteUpdateAsync(s => s.SetProperty(a => a.ViewCount, a => a.ViewCount + 1));
     var article = await ctx.Articles.Include(article => article.Sections).SingleAsync(a => a.ArticleId == articleId);
-    var htmlBuilder = HtmlBuilder.Create()
+    var htmlBuilder = HtmlBuilder.Create(article.Title)
         .AddGoHomeHeader("Article")
         .AddArticle(new(
             article.Title,
@@ -72,11 +72,12 @@ static async Task<IResult> GetArticles(DataContext ctx, int startIndex, int leng
         .Chunk(length)
         .Select(range => new ArticleRange(range.First(), length))
         .ToList();
-    var htmlBuilder = HtmlBuilder.Create()
+    string title = $"Articles: {startIndex} - {(startIndex + articles.Length)}";
+    var htmlBuilder = HtmlBuilder.Create(title)
         .AddGoHomeHeader("All Articles")
         .AddRanges(ranges)
         .AddArticleList(
-            $"Articles: {startIndex} - {(startIndex + articles.Length)}",
+            title,
             startIndex,
             articles.Select(TruncateArticleTitle));
     return Results.Content(htmlBuilder.Build(), "text/html");
